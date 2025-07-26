@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
+
+# gcloud auth application-default login
+# ./s2p-gcp.py --voice en-US-Wavenet-H text text.mp3
+
 # This script uses Google Cloud Text-to-Speech API to convert text from a file to spoken audio in MP3 format.
 # It also allows listing available voices and selecting a specific voice.
 # Prerequisites:
-# 1. Install the required libraries: pip install google-cloud-texttospeech argparse
+# 1. Install the required libraries: uv pip install google-cloud-texttospeech argparse
 # 2. Install the Google Cloud CLI (gcloud) if not already installed: https://cloud.google.com/sdk/docs/install
 # 3. Authenticate gcloud: gcloud auth login
 # 4. Create or select a Google Cloud project:
@@ -10,14 +15,13 @@
 # 5. Enable billing for your project if not already (done via Google Cloud Console: https://console.cloud.google.com/billing)
 # 6. Enable the Text-to-Speech API: gcloud services enable texttospeech.googleapis.com
 # 7. Create a service account: gcloud iam service-accounts create tts-service-account --display-name="TTS Service Account"
-# 8. Create a custom IAM role for Text-to-Speech (since there is no predefined role):
-#    gcloud iam roles create texttospeech_user --project=YOUR_PROJECT_ID --title="Text to Speech User" --description="Access to TTS API" --permissions=texttospeech.syntheses.synthesize,texttospeech.voices.list
-# 9. Grant the custom role to the service account:
-#    gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:tts-service-account@YOUR_PROJECT_ID.iam.gserviceaccount.com" --role="projects/YOUR_PROJECT_ID/roles/texttospeech_user"
-# 10. Create and download a service account key:
+# 8. Grant the Text-to-Speech Admin role to the service account:
+#    gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:tts-service-account@YOUR_PROJECT_ID.iam.gserviceaccount.com" --role="roles/texttospeech.admin"
+# 9. Create and download a service account key (optional, not recommended for local development):
 #     gcloud iam service-accounts keys create key.json --iam-account=tts-service-account@YOUR_PROJECT_ID.iam.gserviceaccount.com
-# 11. Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to the path of your service account key file.
+# 10. Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to the path of your service account key file (optional, not recommended for local development).
 #     Example: export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/key.json"
+# 11. Run gcloud auth application-default login
 # Usage:
 # - To synthesize speech: python script_name.py input_text_file.txt output_audio.mp3 [--voice <voice_name>] [--language <language_code>]
 # - To list voices: python script_name.py --list-voices [--language <language_code>]
@@ -27,7 +31,11 @@ import sys
 from google.cloud import texttospeech
 
 def list_voices(language_code):
-    client = texttospeech.TextToSpeechClient()
+    try:
+        client = texttospeech.TextToSpeechClient()
+    except Exception as e:
+        print(f"Error creating client: {e}")
+        sys.exit(1)
     try:
         response = client.list_voices(language_code=language_code)
         for voice in response.voices:
@@ -53,8 +61,11 @@ def text_to_speech(input_file, output_file, voice_name, language_code):
         sys.exit(1)
 
     # Instantiates a client
-    client = texttospeech.TextToSpeechClient()
-
+    try:
+        client = texttospeech.TextToSpeechClient()
+    except Exception as e:
+        print(f"Error creating client: {e}")
+        sys.exit(1)
     # Set the text input to be synthesized
     synthesis_input = texttospeech.SynthesisInput(text=text)
 
