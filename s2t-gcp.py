@@ -1,24 +1,30 @@
 #!/usr/bin/env python3
 
 # This script uses Google Cloud Text-to-Speech API to convert text from a file to spoken audio in MP3 format.
+# It supports plain text files (.txt) or PDF files (.pdf).
 # It also allows listing available voices and selecting a specific voice.
 
 # Prerequisites:
-# 1. Install the required libraries: uv pip install google-cloud-texttospeech argparse
+# 1. Install the required libraries: uv pip install google-cloud-texttospeech argparse pypdf2
 # 2. Install the Google Cloud CLI (gcloud) if not already installed: https://cloud.google.com/sdk/docs/install
 # 3. Authenticate gcloud: gcloud auth login
 # 4. Enable the Text-to-Speech API: gcloud services enable texttospeech.googleapis.com
 
 # Usage:
-# - To synthesize speech: python script_name.py input_text_file.txt output_audio.mp3 [--voice <voice_name>] [--language <language_code>]
+# - To synthesize speech: python script_name.py input_file output_audio.mp3 [--voice <voice_name>] [--language <language_code>]
+#   where input_file can be a .txt or .pdf file.
 # - To list voices: python script_name.py --list-voices [--language <language_code>]
 
-# ./s2p-gcp.py --voice en-US-Wavenet-H text text.mp3
+# ./s2p-gcp.py --voice en-US-Wavenet-H text.txt text.mp3
+# or
+# ./s2p-gcp.py --voice en-US-Wavenet-H document.pdf output.mp3
 # cloudshell download file.mp3
 
 import argparse
 import sys
+import os
 from google.cloud import texttospeech
+import PyPDF2
 
 def list_voices(language_code):
     try:
@@ -32,22 +38,41 @@ def list_voices(language_code):
             print(f"Name: {voice.name}")
             print(f"Languages: {', '.join(voice.language_codes)}")
             print(f"Gender: {texttospeech.SsmlVoiceGender(voice.ssml_gender).name}")
-            print("Natural Sample Rate Hertz: {voice.natural_sample_rate_hertz}")
+            print(f"Natural Sample Rate Hertz: {voice.natural_sample_rate_hertz}")
             print("---")
     except Exception as e:
         print(f"Error listing voices: {e}")
         sys.exit(1)
 
 def text_to_speech(input_file, output_file, voice_name, language_code):
+    # Determine file type
+    file_ext = os.path.splitext(input_file)[1].lower()
+    
     # Read the text from the input file
+    text = ''
     try:
-        with open(input_file, 'r', encoding='utf-8') as f:
-            text = f.read()
+        if file_ext == '.txt':
+            with open(input_file, 'r', encoding='utf-8') as f:
+                text = f.read()
+        elif file_ext == '.pdf':
+            with open(input_file, 'rb') as f:
+                reader = PyPDF2.PdfReader(f)
+                for page in reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + '\n'
+        else:
+            print(f"Error: Unsupported file type '{file_ext}'. Only .txt and .pdf are supported.")
+            sys.exit(1)
     except FileNotFoundError:
         print(f"Error: Input file '{input_file}' not found.")
         sys.exit(1)
     except Exception as e:
         print(f"Error reading input file: {e}")
+        sys.exit(1)
+
+    if not text.strip():
+        print("Error: No text extracted from the input file.")
         sys.exit(1)
 
     # Instantiates a client
@@ -91,7 +116,7 @@ def text_to_speech(input_file, output_file, voice_name, language_code):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Text-to-Speech using Google Cloud API")
-    parser.add_argument('input_file', nargs='?', help="Input text file")
+    parser.add_argument('input_file', nargs='?', help="Input text or PDF file")
     parser.add_argument('output_file', nargs='?', help="Output MP3 file")
     parser.add_argument('--list-voices', action='store_true', help="List available voices and exit")
     parser.add_argument('--voice', default="en-US-Wavenet-D", help="Voice name to use (default: en-US-Wavenet-D)")
