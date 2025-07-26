@@ -1,30 +1,20 @@
 #!/usr/bin/env python3
 
-# gcloud auth application-default login
-# ./s2p-gcp.py --voice en-US-Wavenet-H text text.mp3
-
 # This script uses Google Cloud Text-to-Speech API to convert text from a file to spoken audio in MP3 format.
 # It also allows listing available voices and selecting a specific voice.
+
 # Prerequisites:
 # 1. Install the required libraries: uv pip install google-cloud-texttospeech argparse
 # 2. Install the Google Cloud CLI (gcloud) if not already installed: https://cloud.google.com/sdk/docs/install
 # 3. Authenticate gcloud: gcloud auth login
-# 4. Create or select a Google Cloud project:
-#    - To create a new project: gcloud projects create YOUR_PROJECT_ID --name="Your Project Name" (replace YOUR_PROJECT_ID with a unique ID)
-#    - Set the project: gcloud config set project YOUR_PROJECT_ID
-# 5. Enable billing for your project if not already (done via Google Cloud Console: https://console.cloud.google.com/billing)
-# 6. Enable the Text-to-Speech API: gcloud services enable texttospeech.googleapis.com
-# 7. Create a service account: gcloud iam service-accounts create tts-service-account --display-name="TTS Service Account"
-# 8. Grant the Text-to-Speech Admin role to the service account:
-#    gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member="serviceAccount:tts-service-account@YOUR_PROJECT_ID.iam.gserviceaccount.com" --role="roles/texttospeech.admin"
-# 9. Create and download a service account key (optional, not recommended for local development):
-#     gcloud iam service-accounts keys create key.json --iam-account=tts-service-account@YOUR_PROJECT_ID.iam.gserviceaccount.com
-# 10. Set the GOOGLE_APPLICATION_CREDENTIALS environment variable to the path of your service account key file (optional, not recommended for local development).
-#     Example: export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/key.json"
-# 11. Run gcloud auth application-default login
+# 4. Enable the Text-to-Speech API: gcloud services enable texttospeech.googleapis.com
+
 # Usage:
 # - To synthesize speech: python script_name.py input_text_file.txt output_audio.mp3 [--voice <voice_name>] [--language <language_code>]
 # - To list voices: python script_name.py --list-voices [--language <language_code>]
+
+# ./s2p-gcp.py --voice en-US-Wavenet-H text text.mp3
+# cloudshell download file.mp3
 
 import argparse
 import sys
