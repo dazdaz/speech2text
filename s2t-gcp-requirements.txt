@@ -1,2 +1,3 @@
 argparse
 google-cloud-texttospeech
+PyPDF2
